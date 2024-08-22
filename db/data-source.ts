@@ -3,7 +3,6 @@ import { config } from 'dotenv';
 import { join} from "path"
 config();
 
-console.log(join(__dirname, './src/**/**.entity{.ts,.js}'))
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
@@ -12,8 +11,8 @@ export const dataSourceOptions: DataSourceOptions = {
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
-  entities: [join(__dirname, './src/**/**.entity{.ts,.js}')],
-  migrations: ["dist/src/migrations/**.js"], 
+  entities: ['dist/src/**/**.entity.js'],
+  migrations: ["dist/db/migrations/**.js"], 
   logging: false,
   synchronize: false,
 };
