@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
 import { Repository } from 'typeorm';
-import { UserSignup } from './dto/user-signup.dto';
+import { UserSignupDto } from './dto/user-signup.dto';
+import { hash } from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -11,9 +12,12 @@ export class UsersService {
     private usersRepository: Repository<UserEntity>,
   ) {}
 
-  async signup(body:UserSignup): Promise<UserEntity>{
-    const user = this.usersRepository.create(body)
-    return await this.usersRepository.save(user)
+  async signup(body: UserSignupDto): Promise<UserEntity> {
+    const userExists = await this.findUserByEmail(body.email);
+    if (userExists) throw new BadRequestException('Account already exists');
+    body.password = hash(body.password, 10);
+    const user = this.usersRepository.create(body);
+    return await this.usersRepository.save(user);
   }
 
   findAll() {
@@ -26,5 +30,9 @@ export class UsersService {
 
   remove(id: number) {
     return `This action removes a #${id} user`;
+  }
+
+  async findUserByEmail(email: string) {
+    return await this.usersRepository.findOneBy({ email });
   }
 }
