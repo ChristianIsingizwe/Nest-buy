@@ -24,7 +24,7 @@ export class UsersService {
     return user;
   }
 
-  async signin(userSigninDto: UserSigninDto) {
+  async signin(userSigninDto: UserSigninDto): Promise<UserEntity> {
     const userExists = await this.usersRepository
       .createQueryBuilder('users')
       .addSelect('users.password')
@@ -57,7 +57,7 @@ export class UsersService {
     return await this.usersRepository.findOneBy({ email });
   }
 
-  async accessToken(user: UserEntity) {
+  async accessToken(user: UserEntity):Promise<string> {
     return sign(
       { id: user.id, email: user.email },
       process.env.ACCESS_TOKEN_SECRET_KEY,
