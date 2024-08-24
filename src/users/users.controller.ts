@@ -14,7 +14,6 @@ import { UserEntity } from './entities/user.entity';
 import { UserSigninDto } from './dto/user-signin.dto';
 import { CurrentUser } from 'src/utility/decorators/current-user.decorator';
 import { AuthenticationGuard } from 'src/utility/guards/authentication.guard';
-import { AuthorizeRoles } from 'src/utility/decorators/authorize-roles.metadata';
 import { Roles } from 'src/utility/common/user-roles.enum';
 import { AuthorizeGuard } from 'src/utility/guards/authorization.guard';
 
