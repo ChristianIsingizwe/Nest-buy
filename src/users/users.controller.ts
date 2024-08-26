@@ -13,7 +13,8 @@ import { UserSignupDto } from './dto/user-signup.dto';
 import { UserEntity } from './entities/user.entity';
 import { UserSigninDto } from './dto/user-signin.dto';
 import { CurrentUser } from 'src/utility/decorators/current-user.decorator';
-import { AuthenticationGuard } from 'src/utility/guards/authentication.guard';
+import { AuthenticationGuard } from 'src/utility/guards/authentication.guard'; 
+
 import { Roles } from 'src/utility/common/user-roles.enum';
 import { AuthorizeGuard } from 'src/utility/guards/authorization.guard';
 
@@ -23,7 +24,9 @@ export class UsersController {
 
   @Post('signup')
   async signup(@Body() body: UserSignupDto): Promise<UserEntity> {
-    return await this.usersService.signup(body);
+    return await this.usersService.signup(body);    
+
+  
   }
 
   @Post('signin')
