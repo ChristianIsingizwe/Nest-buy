@@ -6,11 +6,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   Timestamp,
 } from 'typeorm';
 import { ShippingEntity } from './shipping.entity';
+import { OrdersProductsEntity } from './orders-products.entity';
 
 @Entity({ name: 'orders' })
 export class OrderEntity {
@@ -35,4 +37,7 @@ export class OrderEntity {
   @OneToOne(() => ShippingEntity, (ship) => ship.order, { cascade: true })
   @JoinColumn()
   shippingAddress: ShippingEntity;
+
+  @OneToMany(()=>OrdersProductsEntity, (op)=>op.order, {cascade:true})
+  products:OrdersProductsEntity[];
 }
