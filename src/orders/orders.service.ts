@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -23,6 +25,7 @@ export class OrdersService {
     private readonly orderRepository: Repository<OrderEntity>,
     @InjectRepository(OrdersProductsEntity)
     private readonly opRepository: Repository<OrdersProductsEntity>,
+    @Inject(forwardRef(() => ProductsService))
     private readonly productService: ProductsService,
   ) {}
   async create(createOrderDto: CreateOrderDto, currentUser: UserEntity) {
@@ -84,6 +87,15 @@ export class OrdersService {
     });
   }
 
+  async findOneByProductId(id: number) {
+    return await this.opRepository.findOne({
+      relations: {
+        product: true,
+      },
+      where: { product: { id: id } },
+    });
+  }
+
   async update(
     id: number,
     updateOrderStatusDto: UpdateOrderStatusDto,
@@ -127,16 +139,16 @@ export class OrdersService {
     return order;
   }
 
-  async cancelled(id:number, currentUser:UserEntity){
-    let order= await this.findOne(id)
-    if(!order) throw new NotFoundException("Order not found");
-    if(order.status===OrderStatus.CANCELLED) return order;
+  async cancelled(id: number, currentUser: UserEntity) {
+    let order = await this.findOne(id);
+    if (!order) throw new NotFoundException('Order not found');
+    if (order.status === OrderStatus.CANCELLED) return order;
 
-    order.status = OrderStatus.CANCELLED
-    order.updatedBy = currentUser
-    order = await this.orderRepository.save(order)
-    await this.stockUpdate(order, OrderStatus.CANCELLED)
-    return order
+    order.status = OrderStatus.CANCELLED;
+    order.updatedBy = currentUser;
+    order = await this.orderRepository.save(order);
+    await this.stockUpdate(order, OrderStatus.CANCELLED);
+    return order;
   }
 
   remove(id: number) {

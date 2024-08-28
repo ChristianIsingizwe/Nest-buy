@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,6 +14,7 @@ import { CategoriesService } from 'src/categories/categories.service';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { OrderStatus } from 'src/utility/common/order-status.enum';
 import datasource from 'db/data-source';
+import { OrdersService } from 'src/orders/orders.service';
 
 @Injectable()
 export class ProductsService {
@@ -15,6 +22,8 @@ export class ProductsService {
     @InjectRepository(ProductEntity)
     private readonly productRepository: Repository<ProductEntity>,
     private readonly categoryService: CategoriesService,
+    @Inject(forwardRef(() => OrdersService))
+    private readonly orderService: OrdersService,
   ) {}
   async create(
     createProductDto: CreateProductDto,
@@ -31,7 +40,9 @@ export class ProductsService {
     return await this.productRepository.save(product);
   }
 
-  async findAll(query: any): Promise<{products:any[],totalProducts,limit}> {
+  async findAll(
+    query: any,
+  ): Promise<{ products: any[]; totalProducts; limit }> {
     let filteredTotalProducts: number;
     let limit: number;
     if (!query.limit) {
@@ -92,7 +103,7 @@ export class ProductsService {
       queryBuilder.offset(query.offset);
     }
     const products = await queryBuilder.getRawMany();
-    return {products:products, totalProducts, limit};
+    return { products: products, totalProducts, limit };
   }
 
   async findOne(id: number) {
@@ -136,8 +147,12 @@ export class ProductsService {
     return await this.productRepository.save(product);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  async remove(id: number) {
+    const product = await this.findOne(id);
+    const order = await this.orderService.findOneByProductId(product.id);
+    if (order) throw new BadRequestException('Product is in use');
+
+    return await this.productRepository.remove(product);
   }
 
   async updateStock(id: number, stock: number, status: string) {
