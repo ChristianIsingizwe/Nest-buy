@@ -46,7 +46,7 @@ export class OrdersService {
     .into(OrdersProductsEntity)
     .values(opEntity)
     .execute()
-    return await this.findOne(order.id);
+    return await this.findOne(orderTable.id);
   }
 
   findAll() {
