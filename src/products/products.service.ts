@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { OrderStatus } from 'src/utility/common/order-status.enum';
+import datasource from 'db/data-source';
 
 @Injectable()
 export class ProductsService {
@@ -30,8 +31,68 @@ export class ProductsService {
     return await this.productRepository.save(product);
   }
 
-  async findAll(): Promise<ProductEntity[]> {
-    return await this.productRepository.find();
+  async findAll(query: any): Promise<any> {
+    let filteredTotalProducts: number;
+    let limit: number;
+    if (!query.limit) {
+      limit = 4;
+    } else {
+      limit = query.limit;
+    }
+
+    const queryBuilder = datasource
+      .getRepository(ProductEntity)
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoin('product.reviews', 'review')
+      .addSelect([
+        'COUNT(review.id) AS reviewCount',
+        'AVG(review.ratings)::numeric(10,2) AS avgRating',
+      ])
+      .groupBy('product.id, category.id');
+
+    const totalProducts = await queryBuilder.getCount();
+    if (query.search) {
+      const search = query.search;
+      queryBuilder.andWhere('product.title like :title', {
+        title: `%${search}%`,
+      });
+    }
+
+    if (query.category) {
+      queryBuilder.andWhere('category.id=:id', { id: query.category });
+    }
+
+    if (query.minPrice) {
+      queryBuilder.andWhere('product.price>=:minPrice', {
+        minPrice: query.minPrice,
+      });
+    }
+    if (query.maxPrice) {
+      queryBuilder.andWhere('product.price<=:minPrice', {
+        maxPrice: query.maxPrice,
+      });
+    }
+
+    if (query.minRating) {
+      queryBuilder.andHaving('AVG(review.ratings)>=:minRating', {
+        minRating: query.minRating,
+      });
+    }
+
+    if (query.maxRating) {
+      queryBuilder.andHaving('AVG(review.ratings)<=:maxRating', {
+        maxRating: query.maxRating,
+      });
+    }
+
+    queryBuilder.limit(limit);
+
+    if (query.offset) {
+      queryBuilder.offset(query.offset);
+    }
+    const product = await queryBuilder.getRawMany();
+    return product;
   }
 
   async findOne(id: number) {
@@ -79,15 +140,14 @@ export class ProductsService {
     return `This action removes a #${id} product`;
   }
 
-  async updateStock(id:number, stock:number, status:string){
-    let product= await this.findOne(id)
-    if(status===OrderStatus.DELIVERED){
-      product.stock-=stock
+  async updateStock(id: number, stock: number, status: string) {
+    let product = await this.findOne(id);
+    if (status === OrderStatus.DELIVERED) {
+      product.stock -= stock;
+    } else {
+      product.stock += stock;
     }
-    else{
-      product.stock+=stock
-    }
-    product = await this.productRepository.save(product)
-    return product
+    product = await this.productRepository.save(product);
+    return product;
   }
 }
