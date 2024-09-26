@@ -26,7 +26,6 @@ export class UsersController {
   async signup(@Body() body: UserSignupDto): Promise<UserEntity> {
     return await this.usersService.signup(body);    
 
-    
   }
 
   @Post('signin')
